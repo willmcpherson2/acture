@@ -1,19 +1,22 @@
-cabal-version: 3.6
+cabal-version: 3.8
 name: acture
 version: 0.1.0.0
 
 common shared
-  default-language: GHC2021
+  default-language: Haskell2010
   default-extensions:
     LambdaCase
+    ExistentialQuantification
+    FlexibleInstances
+    MultiParamTypeClasses
   ghc-options:
     -Weverything
     -Wno-missing-safe-haskell-mode
     -Wno-implicit-prelude
-    -Wno-missing-kind-signatures
     -Wno-missing-deriving-strategies
     -Wno-name-shadowing
     -Wno-unsafe
+    -Wno-safe
     -Wno-missing-import-lists
     -Wno-prepositive-qualified-module
     -Wno-unused-do-bind
