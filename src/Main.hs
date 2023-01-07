@@ -1,39 +1,59 @@
 module Main (main) where
 
-import Actor (A (..), Actor (..), mapRun)
-import Control.Monad (forM_)
+import Actor (A (..), Actor (..), runAll)
+import Control.Lens
 
-data Msg
-  = Ping
-  | Pong
-  | End
+data Pos = Pos {_x :: Int, _y :: Int}
   deriving (Show, Eq)
 
-newtype Echo = Echo Int
+makeLenses ''Pos
 
-instance Actor Echo Msg where
-  run (Echo n) m = case n of
-    0 -> (Echo 0, End)
-    n ->
-      ( Echo $ n - 1,
-        case m of
-          Ping -> Pong
-          Pong -> Ping
-          End -> End
-      )
+newtype Msg
+  = Occupy Pos
+  deriving (Show, Eq)
 
-world :: Msg -> [A Msg] -> IO ()
-world m as = do
-  let (as', ms) = mapRun as m
-  forM_ ms print
-  if End `elem` ms
-    then pure ()
-    else case m of
-      Ping -> world Pong as'
-      Pong -> world Ping as'
-      End -> pure ()
+newtype Tree = Tree {_treePos :: Pos}
+  deriving (Show, Eq)
+
+makeLenses ''Tree
+
+instance Actor Tree Msg where
+  run s _ = (s, [Occupy $ s ^. treePos])
+
+newtype Man = Man {_manPos :: Pos}
+  deriving (Show, Eq)
+
+makeLenses ''Man
+
+instance Actor Man Msg where
+  run s ms =
+    let p = s ^. manPos
+        p' = p & x +~ 1
+        occupied = Occupy p' `elem` ms
+     in if occupied
+          then (s, [Occupy p])
+          else (s & manPos .~ p', [Occupy p'])
+
+newtype World = World {_n :: Int}
+
+makeLenses ''World
+
+world :: World -> [A Msg] -> [Msg] -> IO (World, [A Msg], [Msg])
+world w as ms = do
+  print ms
+  case w ^. n of
+    0 -> pure (w, as, ms)
+    _ -> do
+      let (as', ms') = runAll as ms
+      world (w & n -~ 1) as' ms'
 
 main :: IO ()
 main = do
-  world Ping [A $ Echo 10, A $ Echo 10]
+  _ <-
+    world
+      World {_n = 10}
+      [ A $ Man {_manPos = Pos 0 0},
+        A $ Tree {_treePos = Pos 5 0}
+      ]
+      []
   pure ()

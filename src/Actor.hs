@@ -1,10 +1,7 @@
-module Actor (Actor (..), A (..), mapRun, foldRun) where
-
-import Data.List.NonEmpty (unzip)
-import Prelude hiding (unzip)
+module Actor (Actor (..), A (..), runAll) where
 
 class Actor s m where
-  run :: s -> m -> (s, m)
+  run :: s -> [m] -> (s, [m])
 
 data A m = forall s. Actor s m => A s
 
@@ -13,11 +10,7 @@ instance Actor (A m) m where
     let (s', m') = run s m
      in (A s', m')
 
-mapRun :: (Actor s m, Functor f) => f s -> m -> (f s, f m)
-mapRun s m = unzip $ fmap (`run` m) s
-
-foldRun :: (Actor s m, Foldable t, Applicative f, Monoid (f m)) => s -> t m -> (s, f m)
-foldRun s =
-  foldr
-    (\m (s, ms) -> let (s', m') = run s m in (s', pure m' <> ms))
-    (s, mempty)
+runAll :: Actor s m => [s] -> [m] -> ([s], [m])
+runAll ss ms =
+  let (ss', ms') = unzip $ map (`run` ms) ss
+   in (ss', concat ms')

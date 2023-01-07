@@ -9,6 +9,7 @@ common shared
     ExistentialQuantification
     FlexibleInstances
     MultiParamTypeClasses
+    TemplateHaskell
   ghc-options:
     -Weverything
     -Wno-missing-safe-haskell-mode
@@ -33,3 +34,4 @@ executable acture
     Actor
   build-depends:
     base
+    , lens
